@@ -38,9 +38,9 @@ contract XORA is ERC20, Ownable, ReentrancyGuard {
 
     // address public constant AIRDROP = 0x1aE0EA34a72D944a8C7603FfB3eC30a6669E454C;
 
-    constructor() Ownable(msg.sender) ERC20("XORA Token", "XORA") {
+    constructor(address _pairLiquidityPool) Ownable(msg.sender) ERC20("XORA Token", "XORA") {
         _mint(PLAY_TO_EARN, 450_000_000 * (10**18)); //45%
-        _mint(LIQUIDITY_POOL, 150_000_000 * (10**18)); //15%
+        _mint(_pairLiquidityPool, 150_000_000 * (10**18)); //15%
         _mint(TEAM_AND_DEVELOPMENT, 100_000_000 * (10**18)); //10%
         _mint(COMMUNITY_GROWTH_AND_MARKETING, 100_000_000 * (10**18)); //10%
         _mint(STRADEGIC_RESERVE, 100_000_000 * (10**18)); //10%
