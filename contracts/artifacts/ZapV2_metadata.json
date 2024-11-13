@@ -1,0 +1,166 @@
+{
+	"compiler": {
+		"version": "0.8.26+commit.8a97fa7a"
+	},
+	"language": "Solidity",
+	"output": {
+		"abi": [
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "_router",
+						"type": "address"
+					}
+				],
+				"stateMutability": "nonpayable",
+				"type": "constructor"
+			},
+			{
+				"inputs": [],
+				"name": "router",
+				"outputs": [
+					{
+						"internalType": "contract Router",
+						"name": "",
+						"type": "address"
+					}
+				],
+				"stateMutability": "view",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "tokenA",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "tokenB",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amountA",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amountB",
+						"type": "uint256"
+					}
+				],
+				"name": "zapIn",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			},
+			{
+				"inputs": [
+					{
+						"internalType": "address",
+						"name": "tokenA",
+						"type": "address"
+					},
+					{
+						"internalType": "address",
+						"name": "tokenB",
+						"type": "address"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amountA",
+						"type": "uint256"
+					},
+					{
+						"internalType": "uint256",
+						"name": "amountB",
+						"type": "uint256"
+					}
+				],
+				"name": "zapOut",
+				"outputs": [],
+				"stateMutability": "nonpayable",
+				"type": "function"
+			}
+		],
+		"devdoc": {
+			"kind": "dev",
+			"methods": {},
+			"version": 1
+		},
+		"userdoc": {
+			"kind": "user",
+			"methods": {},
+			"version": 1
+		}
+	},
+	"settings": {
+		"compilationTarget": {
+			"contracts/ZapV2.sol": "ZapV2"
+		},
+		"evmVersion": "cancun",
+		"libraries": {},
+		"metadata": {
+			"bytecodeHash": "ipfs"
+		},
+		"optimizer": {
+			"enabled": false,
+			"runs": 200
+		},
+		"remappings": []
+	},
+	"sources": {
+		"@openzeppelin/contracts/security/ReentrancyGuard.sol": {
+			"keccak256": "0xa535a5df777d44e945dd24aa43a11e44b024140fc340ad0dfe42acf4002aade1",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://41319e7f621f2dc3733511332c4fd032f8e32ad2aa7fd6f665c19741d9941a34",
+				"dweb:/ipfs/QmcYR3bd862GD1Bc7jwrU9bGxrhUu5na1oP964bDCu2id1"
+			]
+		},
+		"@openzeppelin/contracts/token/ERC20/IERC20.sol": {
+			"keccak256": "0xe06a3f08a987af6ad2e1c1e774405d4fe08f1694b67517438b467cecf0da0ef7",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://df6f0c459663c9858b6cba2cda1d14a7d05a985bed6d2de72bd8e78c25ee79db",
+				"dweb:/ipfs/QmeTTxZ7qVk9rjEv2R4CpCwdf8UMCcRqDNMvzNxHc3Fnn9"
+			]
+		},
+		"contracts/Factory.sol": {
+			"keccak256": "0x91aa28db699a8aa185b67cfe84957fd84e093763b6738a1c39b2c670ece2691c",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://c58b5c17a1f83505a5a23a43dec4472078561f487ab5d22daab39bbe386328bf",
+				"dweb:/ipfs/QmTiPTjrPDgPSdfdeTHE9f9urzCR9Cd2cGQ8atEUbdvDQ9"
+			]
+		},
+		"contracts/Pair.sol": {
+			"keccak256": "0x5ad500b311b3217c6dcf782aa51dd787f7ff44fcfac1528b5ded442cf4f6b0e5",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://9687935b9a0e99eacc4d28e41318ff7d5abe245c15dc13e7a35cffadd18bce30",
+				"dweb:/ipfs/QmNiZuwJtaykxS6kNetRFeUgFBMhB5AtCcEVyar2FZvPax"
+			]
+		},
+		"contracts/Router.sol": {
+			"keccak256": "0x497a537c67fd6afecdfd2a70f0382d36ff207a692b55ecc763736871385d8c5c",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://a24c9344239fa81e2f2cae875b39e30ab46f2a09fd7bf908c07de6a47b1a6430",
+				"dweb:/ipfs/QmbyxYiTsQZMiSoNMAvE2xKXvJ1dzJnGspS7Mp3YKevi33"
+			]
+		},
+		"contracts/ZapV2.sol": {
+			"keccak256": "0x5f3b17b4c8d5bf40c6e91ad5510d7663207f71976086b967a4d08c3d1e2d7d34",
+			"license": "MIT",
+			"urls": [
+				"bzz-raw://439c65c9fb145a7c3ca6e44608302904c3c7a9e71f0175ffddbeb44a6c46bd1a",
+				"dweb:/ipfs/QmQckBmmSNjThV9MDTKvjShvu8CFtzVejXqnZbc1ggBzjr"
+			]
+		}
+	},
+	"version": 1
+}

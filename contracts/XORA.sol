@@ -15,6 +15,20 @@ contract XORA is ERC20, Ownable, ReentrancyGuard {
     uint256 public rewardRate;
     uint256 public constant HALVING_PERIOD = 365 days;
 
+    uint256 startTimestamp;
+    uint256 constant TEAM_CLIFF = 18 * 30 days;
+    uint256 constant TEAM_VESTING_PERIOD = 4 * 365 days;
+    uint256 TEAM_TOTAL_FUND = 100_000_000 * (10**18);
+
+    uint256 public constant MARKETING_INITIAL_UNLOCK = 25;
+
+    uint256 public teamAllocated = 100_000_000 * (10**18);
+    uint256 public releasedTeamAmount;
+    uint256 MARKETING_VESTING_PERIOD = 12 * 30 days;
+
+    uint256 public marketingAllocated = 75_000_000 * (10**18);
+    uint256 public releasedMarketingAmount;
+
     event RewardHalved(uint256 newRewardRate);
     event TokensBurned(uint256 amount);
     event BuyBackAndBurn(uint256 amount);
@@ -38,13 +52,50 @@ contract XORA is ERC20, Ownable, ReentrancyGuard {
 
     // address public constant AIRDROP = 0x1aE0EA34a72D944a8C7603FfB3eC30a6669E454C;
 
-    constructor(address _pairLiquidityPool) Ownable(msg.sender) ERC20("XORA Token", "XORA") {
+    constructor(address _pairLiquidityPool)
+        Ownable(msg.sender)
+        ERC20("XORA Token", "XORA")
+    {
         _mint(PLAY_TO_EARN, 450_000_000 * (10**18)); //45%
         _mint(_pairLiquidityPool, 150_000_000 * (10**18)); //15%
-        _mint(TEAM_AND_DEVELOPMENT, 100_000_000 * (10**18)); //10%
-        _mint(COMMUNITY_GROWTH_AND_MARKETING, 100_000_000 * (10**18)); //10%
+        // _mint(TEAM_AND_DEVELOPMENT, 100_000_000 * (10**18)); //10%
+        _mint(
+            COMMUNITY_GROWTH_AND_MARKETING,
+            (100_000_000 * (10**18) * 25) / 100
+        ); //10% initial supply of 25%
         _mint(STRADEGIC_RESERVE, 100_000_000 * (10**18)); //10%
         _mint(ICO_ALLOCATION, 100_000_000 * (10**18)); //10%
+
+        startTimestamp = block.timestamp;
+    }
+
+    function releaseTeamTokens() external onlyOwner nonReentrant {
+        require(
+            block.timestamp >= startTimestamp + TEAM_CLIFF,
+            "Team vesting cliff not reached"
+        );
+        uint256 elapsedTime = block.timestamp - (startTimestamp + TEAM_CLIFF);
+        uint256 vestedAmount = (teamAllocated * elapsedTime) /
+            TEAM_VESTING_PERIOD;
+        uint256 teamAmount = vestedAmount - releasedTeamAmount;
+        releasedTeamAmount += teamAmount;
+        require(vestedAmount > 0, "No tokens available for release");
+        require(releasedTeamAmount <= teamAllocated, "max token limit reached");
+        _mint(TEAM_AND_DEVELOPMENT, teamAmount);
+    }
+
+    function releaseMarketingTokens() external onlyOwner nonReentrant {
+        uint256 elapsedTime = block.timestamp - startTimestamp;
+        uint256 vestedAmount = (marketingAllocated * elapsedTime) /
+            MARKETING_VESTING_PERIOD;
+        uint256 marketingAmount = vestedAmount - releasedMarketingAmount;
+        releasedMarketingAmount += marketingAmount;
+        require(vestedAmount > 0, "no token available for release");
+        require(
+            releasedMarketingAmount <= marketingAllocated,
+            "max token imit reached"
+        );
+        _mint(COMMUNITY_GROWTH_AND_MARKETING, marketingAmount);
     }
 
     function initializeRewardParameters(
