@@ -10,6 +10,7 @@ contract Router is ReentrancyGuard {
 
     event LiquidityAdded(address indexed tokenA, address indexed tokenB, uint256 amountA, uint256 amountB);
     event LiquidityRemoved(address indexed tokenA, address indexed tokenB, uint256 amountA, uint256 amountB);
+    event RewardClaimed(address indexed tokenA, address indexed tokenB);
 
     constructor(address _factory) {
         factory = Factory(_factory);
@@ -23,11 +24,20 @@ contract Router is ReentrancyGuard {
         emit LiquidityAdded(tokenA, tokenB, amountADesired, amountBDesired);
     }
 
-    function removeLiquidity(address tokenA, address tokenB, uint256 amountA, uint256 amountB) external nonReentrant {
+    function removeLiquidity(address tokenA, address tokenB, uint256 amountA, uint256 amountB,address _XORA) external nonReentrant {
         address pair = factory.getPair(tokenA, tokenB);
         require(pair != address(0), "Router: Pair does not exist");
 
-        Pair(pair).removeLiquidity(msg.sender, amountA, amountB);
+        Pair(pair).removeLiquidity(msg.sender, amountA, amountB, _XORA);
         emit LiquidityRemoved(tokenA, tokenB, amountA, amountB);
+    }
+
+    function claimReward(address tokenA, address tokenB,address _XORA) external nonReentrant {
+        address pair = factory.getPair(tokenA, tokenB);
+        require(pair != address(0), "Router: Pair does not exist");
+
+        Pair(pair).claimRewards(_XORA);
+        emit RewardClaimed(tokenA, tokenB);
+        
     }
 }

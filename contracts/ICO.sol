@@ -7,7 +7,6 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 contract ICO is Ownable(msg.sender), ReentrancyGuard {
     IERC20 public xoraToken;
-    address public IcoAllocationAddress;
     enum StageName {
         PrivateSale,
         PreSale,
@@ -30,7 +29,7 @@ contract ICO is Ownable(msg.sender), ReentrancyGuard {
     mapping(address => uint256) public vestedTokens;
     mapping(address => uint256) public claimedTokens;
     mapping(address => uint256) public purchases;
-    mapping(address => uint256) initialPurchased;
+    mapping(address => uint256) public initialPurchased;
     mapping(address => uint256) public purchasesInStableCoin;
 
     uint256 public totalTokensSold;
@@ -45,13 +44,9 @@ contract ICO is Ownable(msg.sender), ReentrancyGuard {
     event StageAdvanced(uint8 newStageIndex);
 
     constructor(
-        address _xoraToken,
-        address _IcoAllocationAddress,
         address[] memory _investors,
         address[] memory _whitelistedPartner
     ) {
-        IcoAllocationAddress = _IcoAllocationAddress;
-        xoraToken = IERC20(_xoraToken);
         currentStage = 0;
         claimedStage = 0;
         // lastClaimTimestamp[msg.sender] = 0;
@@ -67,7 +62,7 @@ contract ICO is Ownable(msg.sender), ReentrancyGuard {
             allocation: 20_000_000 * 10**18,
             price: 0.04 * 10**18,
             targetRaise: 800000,
-            cliff: 60 days,
+            cliff: 0,
             vestingDuration: 10 * 30 days,
             tokensSold: 0,
             bonusPercentage: 15,
@@ -110,7 +105,8 @@ contract ICO is Ownable(msg.sender), ReentrancyGuard {
         Stage storage stage = stages[currentStage];
         if (
             stage.tokensSold >= stage.allocation ||
-            (block.timestamp >= stage.cliff + stage.vestingDuration)
+            (block.timestamp >=
+                (stage.startTime + stage.cliff + stage.vestingDuration))
         ) {
             currentStage++;
             require(currentStage < stages.length, "ICO stages completed");
@@ -119,35 +115,36 @@ contract ICO is Ownable(msg.sender), ReentrancyGuard {
             emit StageAdvanced(currentStage);
         }
 
-        uint256 crntAmount = (amount * 10**18) / stage.price;
-        require(
-            crntAmount <= stage.allocation - stage.tokensSold,
-            "Stage allocation exceeded"
-        );
+        uint256 xoraAmount = (amount * 10**18) / stage.price;
+
         if (stage.name == StageName.PrivateSale) {
             require(isInvestor(msg.sender), "Not investor nor partner");
             if (block.timestamp < (180 days + stage.startTime)) {
-                bonusAmount = (crntAmount * stage.bonusPercentage) / 100;
+                bonusAmount = (xoraAmount * stage.bonusPercentage) / 100;
             }
         }
         if (stage.name == StageName.PreSale) {
             require(isWhitelisted(msg.sender), "Not in whitelisted partner");
-            bonusAmount = (crntAmount * stage.bonusPercentage) / 100;
+            bonusAmount = (xoraAmount * stage.bonusPercentage) / 100;
         }
-        crntAmount += bonusAmount;
-        stage.tokensSold += crntAmount;
-        purchases[msg.sender] += crntAmount;
-        initialPurchased[msg.sender] += crntAmount;
+        xoraAmount += bonusAmount;
+        require(
+            xoraAmount <= stage.allocation - stage.tokensSold,
+            "Stage allocation exceeded"
+        );
+        stage.tokensSold += xoraAmount;
+        purchases[msg.sender] += xoraAmount;
+        initialPurchased[msg.sender] += xoraAmount;
         purchasesInStableCoin[msg.sender] += amount;
         IERC20(stablecoin).transferFrom(msg.sender, address(this), amount);
         claimedStage = currentStage;
     }
 
     // function _calculateVEstedAmount()
-    function claimTokens() external nonReentrant {
+    function claimTokens(address _xoraToken) external nonReentrant {
         uint256 totalPurchased = initialPurchased[msg.sender];
         require(totalPurchased > 0, "No tokens available for release");
-
+        xoraToken = IERC20(_xoraToken);
         Stage storage stage = stages[claimedStage];
         require(
             block.timestamp >= stage.startTime + stage.cliff,
@@ -178,13 +175,10 @@ contract ICO is Ownable(msg.sender), ReentrancyGuard {
 
         claimedTokens[msg.sender] += claimableAmount;
         // Transfer tokens
-        xoraToken.transferFrom(
-            IcoAllocationAddress,
-            msg.sender,
-            claimableAmount
-        );
+        xoraToken.transfer(msg.sender, claimableAmount);
         purchases[msg.sender] -= claimableAmount;
-
+        uint256 amountInStableCoin = (claimableAmount * stage.price)/(10**18);
+        purchasesInStableCoin[msg.sender] -= amountInStableCoin;
         emit TokensClaimed(msg.sender, claimableAmount);
     }
 
@@ -194,7 +188,13 @@ contract ICO is Ownable(msg.sender), ReentrancyGuard {
     {
         uint256 stableCoinAmount = purchasesInStableCoin[msg.sender];
         require(stableCoinAmount >= amount, "Not enough deposited amount");
+        Stage storage stage = stages[claimedStage];
+
+        uint256 xoraAmount = (amount * 10**18) / stage.price;
+        purchases[msg.sender] -= xoraAmount;
+        initialPurchased[msg.sender] -= xoraAmount;
         IERC20(stablecoin).transfer(msg.sender, amount);
+        
         purchasesInStableCoin[msg.sender] -= amount;
     }
 

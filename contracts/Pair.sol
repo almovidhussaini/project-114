@@ -19,10 +19,9 @@ contract Pair is ReentrancyGuard {
     event Burn(address indexed sender, uint256 amount0, uint256 amount1);
     event Swap(address indexed sender, uint256 amountIn, uint256 amountOut, address indexed tokenIn, address indexed tokenOut);
 
-    constructor(address _token0, address _token1, address _XORA) {
+    constructor(address _token0, address _token1) {
         token0 = _token0;
         token1 = _token1;
-        xoraToken = IERC20(_XORA);
     }
 
     function addLiquidity(address to, uint256 amount0, uint256 amount1) external nonReentrant {
@@ -34,22 +33,23 @@ contract Pair is ReentrancyGuard {
         emit Mint(to, amount0, amount1);
     }
 
-    function removeLiquidity(address to, uint256 amount0, uint256 amount1) external nonReentrant {
+    function removeLiquidity(address to, uint256 amount0, uint256 amount1,address _XORA) external nonReentrant {
         require(reserve0 >= amount0 && reserve1 >= amount1, "Pair: INSUFFICIENT_LIQUIDITY");
         reserve0 -= amount0;
         reserve1 -= amount1;
         IERC20(token0).transfer(to, amount0);
         IERC20(token1).transfer(to, amount1);
-        claimRewards();
+        claimRewards(_XORA);
         emit Burn(to, amount0, amount1);
     }
 
-    function claimRewards() public  nonReentrant{
+    function claimRewards(address _XORA) public  nonReentrant{
         uint256 totalShares = reserve0 + reserve1;
         require(totalShares>0,"initial tokens not added");
         uint256 blockTime = addedTime - block.timestamp;
         uint256 reward = (totalShares * blockTime * REWARD_RATE) /(100 * SECONDS_IN_YEAR);
         addedTime = block.timestamp;
+        xoraToken = IERC20(_XORA);
         xoraToken.transfer(msg.sender, reward);
     }
     

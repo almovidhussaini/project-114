@@ -38,14 +38,14 @@ contract Staking is ERC20, Ownable, ReentrancyGuard {
 
     function withdraw(uint256 amount ,address _xoraToken) external {
         require(balances[msg.sender] >= amount, "Insufficient balance");
-        clainRewards(amount);
+        claimRewards(amount);
         xoraToken = IERC20(_xoraToken);
         balances[msg.sender] -=amount;
         xoraToken.transfer( msg.sender, amount);
         emit Withdrawn(msg.sender, amount);
     } 
 
-    function clainRewards(uint256 _amount) public nonReentrant{
+    function claimRewards(uint256 _amount) public nonReentrant{
         require(balances[msg.sender] >= _amount, "you donot have enouph balance");
         uint256 reward;
         uint256 secondsStaked = block.timestamp - stakedfromTS[msg.sender];

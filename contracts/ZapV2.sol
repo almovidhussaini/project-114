@@ -15,8 +15,12 @@ contract ZapV2 {
         router.addLiquidity(tokenA, tokenB, amountA, amountB);
     }
 
-    function zapOut(address tokenA, address tokenB, uint256 amountA, uint256 amountB) external {
+    function zapOut(address tokenA, address tokenB, uint256 amountA, uint256 amountB, address _XORA) external {
         // Allows user to remove liquidity in a single transaction
-        router.removeLiquidity(tokenA, tokenB, amountA, amountB);
+        router.removeLiquidity(tokenA, tokenB, amountA, amountB, _XORA);
+    }
+
+    function claimReward(address tokenA, address tokenB, address _XORA) external {
+        router.claimReward(tokenA, tokenB, _XORA);
     }
 }

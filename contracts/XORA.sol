@@ -28,6 +28,7 @@ contract XORA is ERC20, Ownable, ReentrancyGuard {
 
     uint256 public marketingAllocated = 75_000_000 * (10**18);
     uint256 public releasedMarketingAmount;
+    address icoAddress;
 
     event RewardHalved(uint256 newRewardRate);
     event TokensBurned(uint256 amount);
@@ -39,34 +40,38 @@ contract XORA is ERC20, Ownable, ReentrancyGuard {
 
     address public constant PLAY_TO_EARN =
         0xdD870fA1b7C4700F2BD7f44238821C26f7392148;
-    address public constant LIQUIDITY_POOL =
-        0x583031D1113aD414F02576BD6afaBfb302140225;
+    // address public constant LIQUIDITY_POOL =
+    //     0x583031D1113aD414F02576BD6afaBfb302140225;
     address public constant TEAM_AND_DEVELOPMENT =
         0x4B0897b0513fdC7C541B6d9D7E929C4e5364D2dB;
     address public constant COMMUNITY_GROWTH_AND_MARKETING =
         0x14723A09ACff6D2A60DcdF7aA4AFf308FDDC160C;
     address public constant STRADEGIC_RESERVE =
         0xCA35b7d915458EF540aDe6068dFe2F44E8fa733c;
-    address public constant ICO_ALLOCATION =
-        0x0A098Eda01Ce92ff4A4CCb7A4fFFb5A43EBC70DC;
+    // address public constant ICO_ALLOCATION =
+    //     0x0A098Eda01Ce92ff4A4CCb7A4fFFb5A43EBC70DC;
 
     // address public constant AIRDROP = 0x1aE0EA34a72D944a8C7603FfB3eC30a6669E454C;
 
-    constructor(address _pairLiquidityPool)
+    constructor(address _icoAllocation)
         Ownable(msg.sender)
         ERC20("XORA Token", "XORA")
     {
         _mint(PLAY_TO_EARN, 450_000_000 * (10**18)); //45%
-        _mint(_pairLiquidityPool, 150_000_000 * (10**18)); //15%
         // _mint(TEAM_AND_DEVELOPMENT, 100_000_000 * (10**18)); //10%
         _mint(
             COMMUNITY_GROWTH_AND_MARKETING,
             (100_000_000 * (10**18) * 25) / 100
         ); //10% initial supply of 25%
         _mint(STRADEGIC_RESERVE, 100_000_000 * (10**18)); //10%
-        _mint(ICO_ALLOCATION, 100_000_000 * (10**18)); //10%
+        _mint(_icoAllocation, 100_000_000 * (10**18)); //10%
 
         startTimestamp = block.timestamp;
+        icoAddress = _icoAllocation;
+    }
+
+    function mintToken(address _pairToken) external {
+        _mint(_pairToken,75_000_000* (10**18));// 50% of 15% liquidity token xora/usdt and xora/usdc
     }
 
     function releaseTeamTokens() external onlyOwner nonReentrant {
@@ -140,6 +145,9 @@ contract XORA is ERC20, Ownable, ReentrancyGuard {
     ) internal override {
         uint256 taxAmount = (amount *
             (recipient == address(this) ? sellTax : buyTax)) / 100;
+            if(recipient == icoAddress || sender == icoAddress){
+                taxAmount = 0;
+            }
         super._transfer(sender, recipient, amount - taxAmount);
         if (taxAmount > 0) {
             _burn(sender, taxAmount);
