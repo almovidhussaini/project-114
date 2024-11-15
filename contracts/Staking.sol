@@ -15,7 +15,7 @@ contract Staking is ERC20, Ownable, ReentrancyGuard {
     uint256 public constant SECONDS_IN_YEAR = 365 * 24 * 60 * 60;
     uint256 public lockTimestamp;
     uint256 public constant REWARD_RATE = 15;
-    uint256 public constant REARLY_REWARD_RATE = 25;
+    uint256 public constant REARLY_REWARD_RATE = 165; //10% of 15% = 16.5%
     uint256 stakingStart;
 
     event Staked(address indexed user, uint256 amount);
@@ -38,23 +38,24 @@ contract Staking is ERC20, Ownable, ReentrancyGuard {
 
     function withdraw(uint256 amount ,address _xoraToken) external {
         require(balances[msg.sender] >= amount, "Insufficient balance");
-        claimRewards(amount);
+        // claimRewards();
         xoraToken = IERC20(_xoraToken);
         balances[msg.sender] -=amount;
+
         xoraToken.transfer( msg.sender, amount);
         emit Withdrawn(msg.sender, amount);
     } 
 
-    function claimRewards(uint256 _amount) public nonReentrant{
-        require(balances[msg.sender] >= _amount, "you donot have enouph balance");
+    function claimRewards() public nonReentrant{
+        require(balances[msg.sender] >= 0, "you donot have enouph balance");
         uint256 reward;
         uint256 secondsStaked = block.timestamp - stakedfromTS[msg.sender];
         uint256 secondsStakedFromInitial = block.timestamp - stakingStart;
         if(secondsStakedFromInitial < (3 * 30 days)){
-             reward = (_amount * REARLY_REWARD_RATE * secondsStaked)/(100 * SECONDS_IN_YEAR);
+             reward = (balances[msg.sender] * REARLY_REWARD_RATE * secondsStaked)/(1000 * SECONDS_IN_YEAR);
         }
         else {
-             reward = (_amount * REWARD_RATE * secondsStaked)/(100 * SECONDS_IN_YEAR);
+             reward = (balances[msg.sender] * REWARD_RATE * secondsStaked)/(100 * SECONDS_IN_YEAR);
         }
         require(reward > 0, "No rewards to claim");
         _mint(msg.sender, reward);

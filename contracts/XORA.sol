@@ -29,6 +29,7 @@ contract XORA is ERC20, Ownable, ReentrancyGuard {
     uint256 public marketingAllocated = 75_000_000 * (10**18);
     uint256 public releasedMarketingAmount;
     address icoAddress;
+    address stakingContractAddress;
 
     event RewardHalved(uint256 newRewardRate);
     event TokensBurned(uint256 amount);
@@ -53,7 +54,7 @@ contract XORA is ERC20, Ownable, ReentrancyGuard {
 
     // address public constant AIRDROP = 0x1aE0EA34a72D944a8C7603FfB3eC30a6669E454C;
 
-    constructor(address _icoAllocation)
+    constructor(address _icoAllocation, address _stakingContract)
         Ownable(msg.sender)
         ERC20("XORA Token", "XORA")
     {
@@ -68,6 +69,7 @@ contract XORA is ERC20, Ownable, ReentrancyGuard {
 
         startTimestamp = block.timestamp;
         icoAddress = _icoAllocation;
+        stakingContractAddress = _stakingContract;
     }
 
     function mintToken(address _pairToken) external {
@@ -145,7 +147,7 @@ contract XORA is ERC20, Ownable, ReentrancyGuard {
     ) internal override {
         uint256 taxAmount = (amount *
             (recipient == address(this) ? sellTax : buyTax)) / 100;
-            if(recipient == icoAddress || sender == icoAddress){
+            if(recipient == icoAddress || sender == icoAddress || recipient == stakingContractAddress || sender == stakingContractAddress){
                 taxAmount = 0;
             }
         super._transfer(sender, recipient, amount - taxAmount);

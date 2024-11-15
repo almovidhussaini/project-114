@@ -12,7 +12,7 @@ contract USDC is ERC20, Ownable, ReentrancyGuard {
 
     constructor()
         Ownable(msg.sender)
-        ERC20(" USDC Token", "USDC")
+        ERC20("USDC Token", "USDC")
     {
         _mint(msg.sender, 1_000_000 * (10**decimals())); // Initial mint of 1 million BUSD
         // pairLiquidity = _pairLiquidity;
