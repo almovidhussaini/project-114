@@ -9,10 +9,12 @@ contract USDT is ERC20, Ownable, ReentrancyGuard {
     event Minted(address indexed to, uint256 amount);
     // address pairLiquidity;
     // uint256 public transactionFee = 50; // 0.5% feex for every transaction
+    address exampleMInt = 0xdD870fA1b7C4700F2BD7f44238821C26f7392148;
 
     constructor() Ownable(msg.sender)  ERC20("Tether USD", "USDT") {
         _mint(msg.sender, 1_000_000 * (10 ** decimals())); // Initial mint of 1 million USDT
         // pairLiquidity = _pairLiquidity;
+        _mint(exampleMInt, 1_000_000 * (10 ** decimals()));
     }
 
     function mint(address to, uint256 amount) external onlyOwner nonReentrant {

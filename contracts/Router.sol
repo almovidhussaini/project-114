@@ -17,6 +17,8 @@ contract Router is ReentrancyGuard {
     }
 
     function addLiquidity(address tokenA, address tokenB, uint256 amountADesired, uint256 amountBDesired) external nonReentrant {
+        require(amountADesired > 0 && amountBDesired > 0, "Router: Invalid amounts");
+
         address pair = factory.getPair(tokenA, tokenB);
         require(pair != address(0), "Router: Pair does not exist");
 
@@ -24,11 +26,12 @@ contract Router is ReentrancyGuard {
         emit LiquidityAdded(tokenA, tokenB, amountADesired, amountBDesired);
     }
 
-    function removeLiquidity(address tokenA, address tokenB, uint256 amountA, uint256 amountB,address _XORA) external nonReentrant {
+    function removeLiquidity(address tokenA, address tokenB, uint256 amountA, uint256 amountB) external nonReentrant {
+        require(amountA > 0 && amountB > 0, "Router: Invalid amounts");
         address pair = factory.getPair(tokenA, tokenB);
         require(pair != address(0), "Router: Pair does not exist");
 
-        Pair(pair).removeLiquidity(msg.sender, amountA, amountB, _XORA);
+        Pair(pair).removeLiquidity(msg.sender, amountA, amountB);
         emit LiquidityRemoved(tokenA, tokenB, amountA, amountB);
     }
 
@@ -36,7 +39,7 @@ contract Router is ReentrancyGuard {
         address pair = factory.getPair(tokenA, tokenB);
         require(pair != address(0), "Router: Pair does not exist");
 
-        Pair(pair).claimRewards(_XORA);
+        Pair(pair).claimRewards(msg.sender,_XORA);
         emit RewardClaimed(tokenA, tokenB);
         
     }

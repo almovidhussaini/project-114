@@ -28,8 +28,8 @@ contract XORA is ERC20, Ownable, ReentrancyGuard {
 
     uint256 public marketingAllocated = 75_000_000 * (10**18);
     uint256 public releasedMarketingAmount;
-    address icoAddress;
-    address stakingContractAddress;
+
+    mapping(address => bool) public isTaxExempt;
 
     event RewardHalved(uint256 newRewardRate);
     event TokensBurned(uint256 amount);
@@ -38,6 +38,8 @@ contract XORA is ERC20, Ownable, ReentrancyGuard {
         uint256 initialRewardRate,
         address stablecoin
     );
+    event TeamTokensReleased(address indexed recipient, uint256 amount);
+    event MarketingTokensReleased(address indexed recipient, uint256 amount);
 
     address public constant PLAY_TO_EARN =
         0xdD870fA1b7C4700F2BD7f44238821C26f7392148;
@@ -49,15 +51,13 @@ contract XORA is ERC20, Ownable, ReentrancyGuard {
         0x14723A09ACff6D2A60DcdF7aA4AFf308FDDC160C;
     address public constant STRADEGIC_RESERVE =
         0xCA35b7d915458EF540aDe6068dFe2F44E8fa733c;
-    // address public constant ICO_ALLOCATION =
-    //     0x0A098Eda01Ce92ff4A4CCb7A4fFFb5A43EBC70DC;
 
-    // address public constant AIRDROP = 0x1aE0EA34a72D944a8C7603FfB3eC30a6669E454C;
-
-    constructor(address _icoAllocation, address _stakingContract)
+    constructor(address _icoAllocation)
         Ownable(msg.sender)
         ERC20("XORA Token", "XORA")
     {
+        require(_icoAllocation != address(0), "Invalid ICO address");
+
         _mint(PLAY_TO_EARN, 450_000_000 * (10**18)); //45%
         // _mint(TEAM_AND_DEVELOPMENT, 100_000_000 * (10**18)); //10%
         _mint(
@@ -68,12 +68,12 @@ contract XORA is ERC20, Ownable, ReentrancyGuard {
         _mint(_icoAllocation, 100_000_000 * (10**18)); //10%
 
         startTimestamp = block.timestamp;
-        icoAddress = _icoAllocation;
-        stakingContractAddress = _stakingContract;
+        
     }
 
     function mintToken(address _pairToken) external {
-        _mint(_pairToken,75_000_000* (10**18));// 50% of 15% liquidity token xora/usdt and xora/usdc
+        require(_pairToken != address(0), "Invalid token pair address");
+        _mint(_pairToken, 75_000_000 * (10**18)); // 50% of 15% liquidity token xora/usdt and xora/usdc
     }
 
     function releaseTeamTokens() external onlyOwner nonReentrant {
@@ -89,6 +89,7 @@ contract XORA is ERC20, Ownable, ReentrancyGuard {
         require(vestedAmount > 0, "No tokens available for release");
         require(releasedTeamAmount <= teamAllocated, "max token limit reached");
         _mint(TEAM_AND_DEVELOPMENT, teamAmount);
+        emit TeamTokensReleased(TEAM_AND_DEVELOPMENT, teamAmount);
     }
 
     function releaseMarketingTokens() external onlyOwner nonReentrant {
@@ -103,42 +104,8 @@ contract XORA is ERC20, Ownable, ReentrancyGuard {
             "max token imit reached"
         );
         _mint(COMMUNITY_GROWTH_AND_MARKETING, marketingAmount);
+        emit MarketingTokensReleased(COMMUNITY_GROWTH_AND_MARKETING, marketingAmount);
     }
-
-    function initializeRewardParameters(
-        uint256 _initialRewardRate,
-        address _stablecoin
-    ) external onlyOwner {
-        rewardRate = _initialRewardRate;
-        stablecoin = IERC20(_stablecoin);
-        lastHalvingTime = block.timestamp;
-        emit RewardParametersInitialized(_initialRewardRate, _stablecoin);
-    }
-
-    // ** Annual Reward Halving **
-    function halveRewards() external {
-        require(
-            block.timestamp >= lastHalvingTime + HALVING_PERIOD,
-            "Halving not due yet"
-        );
-
-        rewardRate = rewardRate / 2;
-        lastHalvingTime = block.timestamp;
-
-        emit RewardHalved(rewardRate);
-    }
-
-    // // ** Treasury Buy-Back Program **
-    // function buyBackAndBurn(uint256 stablecoinAmount) external onlyOwner {
-    //     // Transfer stablecoin to external address for token purchase
-    //     stablecoin.transferFrom(address(this), msg.sender, stablecoinAmount);
-    //     // Logic for token purchase goes here
-
-    //     uint256 xeroBalance = balanceOf(address(this)); // Check acquired token balance
-    //     _burn(address(this), xeroBalance); // Burn acquired tokens
-
-    //     emit BuyBackAndBurn(xeroBalance);
-    // }
 
     function _transfer(
         address sender,
@@ -147,12 +114,20 @@ contract XORA is ERC20, Ownable, ReentrancyGuard {
     ) internal override {
         uint256 taxAmount = (amount *
             (recipient == address(this) ? sellTax : buyTax)) / 100;
-            if(recipient == icoAddress || sender == icoAddress || recipient == stakingContractAddress || sender == stakingContractAddress){
-                taxAmount = 0;
-            }
+        if (isTaxExempt[sender] || isTaxExempt[recipient]) {
+            taxAmount = 0;
+        }
         super._transfer(sender, recipient, amount - taxAmount);
         if (taxAmount > 0) {
             _burn(sender, taxAmount);
         }
+    }
+
+    function addTaxExemptAddress(address _address) external onlyOwner {
+        isTaxExempt[_address] = true;
+    }
+
+    function removeTaxExemptAddress(address _address) external onlyOwner {
+        isTaxExempt[_address] = false;
     }
 }
