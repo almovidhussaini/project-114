@@ -16,9 +16,17 @@ contract XORA is ERC20, Ownable, ReentrancyGuard {
     uint256 public constant HALVING_PERIOD = 365 days;
 
     uint256 startTimestamp;
+
     uint256 constant TEAM_CLIFF = 18 * 30 days;
     uint256 constant TEAM_VESTING_PERIOD = 4 * 365 days;
     uint256 TEAM_TOTAL_FUND = 100_000_000 * (10**18);
+
+    uint256 public playToEarnAllocated = 450_000_000 * (10**18); // Initial allocation
+    uint256 public playToEarnBurned; // Tracks the total burned amount
+    uint256 public lastBurnTime; // Timestamp of the last burn
+    uint256 public constant BURN_PERIOD = 365 days; // 1 year period
+    uint8 public burnCount; // Tracks the number of burns performed
+    uint8 public constant MAX_BURNS = 7;
 
     uint256 public constant MARKETING_INITIAL_UNLOCK = 25;
 
@@ -32,6 +40,7 @@ contract XORA is ERC20, Ownable, ReentrancyGuard {
     mapping(address => bool) public isTaxExempt;
 
     event RewardHalved(uint256 newRewardRate);
+    event PlayToEarnBurned(uint256 amountBurned, uint256 remainingBalance);
     event TokensBurned(uint256 amount);
     event BuyBackAndBurn(uint256 amount);
     event RewardParametersInitialized(
@@ -59,7 +68,6 @@ contract XORA is ERC20, Ownable, ReentrancyGuard {
         require(_icoAllocation != address(0), "Invalid ICO address");
 
         _mint(PLAY_TO_EARN, 450_000_000 * (10**18)); //45%
-        // _mint(TEAM_AND_DEVELOPMENT, 100_000_000 * (10**18)); //10%
         _mint(
             COMMUNITY_GROWTH_AND_MARKETING,
             (100_000_000 * (10**18) * 25) / 100
@@ -68,7 +76,7 @@ contract XORA is ERC20, Ownable, ReentrancyGuard {
         _mint(_icoAllocation, 100_000_000 * (10**18)); //10%
 
         startTimestamp = block.timestamp;
-        
+        lastBurnTime = block.timestamp;
     }
 
     function mintToken(address _pairToken) external {
@@ -101,10 +109,13 @@ contract XORA is ERC20, Ownable, ReentrancyGuard {
         require(vestedAmount > 0, "no token available for release");
         require(
             releasedMarketingAmount <= marketingAllocated,
-            "max token imit reached"
+            "max token limit reached"
         );
         _mint(COMMUNITY_GROWTH_AND_MARKETING, marketingAmount);
-        emit MarketingTokensReleased(COMMUNITY_GROWTH_AND_MARKETING, marketingAmount);
+        emit MarketingTokensReleased(
+            COMMUNITY_GROWTH_AND_MARKETING,
+            marketingAmount
+        );
     }
 
     function _transfer(
@@ -121,6 +132,28 @@ contract XORA is ERC20, Ownable, ReentrancyGuard {
         if (taxAmount > 0) {
             _burn(sender, taxAmount);
         }
+    }
+
+    function burnPlayToEarnTokens() external onlyOwner {
+        require(burnCount < MAX_BURNS, "All burns completed");
+        require(
+            block.timestamp >= lastBurnTime + BURN_PERIOD,
+            "Burn period not reached"
+        );
+        uint256 currentBalance = balanceOf(PLAY_TO_EARN);
+        require(currentBalance > 0, "No tokens to burn");
+
+        // Calculate half of the current balance
+        uint256 burnAmount = currentBalance / 2;
+
+        // Burn the tokens
+        _burn(PLAY_TO_EARN, burnAmount);
+
+        // Update state variables
+        playToEarnBurned += burnAmount;
+        lastBurnTime = block.timestamp;
+        burnCount++;
+        emit PlayToEarnBurned(burnAmount, currentBalance - burnAmount);
     }
 
     function addTaxExemptAddress(address _address) external onlyOwner {
